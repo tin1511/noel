@@ -148,7 +148,7 @@ const ov=$("ov"),ray=new THREE.Raycaster();
 function show(html,lock){ov.replaceChildren(html);if(lock)ov.dataset.lock=1;else delete ov.dataset.lock;ov.hidden=false}
 function shut(){ov.hidden=true}
 ov.onclick=e=>{if(e.target===ov&&!ov.dataset.lock||e.target.classList.contains("close"))shut()};
-addEventListener("keydown",e=>{if(e.key==="Escape"&&!ov.dataset.lock)shut();if(e.key.toLowerCase()==="m"&&ov.hidden&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName))admin()});
+addEventListener("keydown",e=>{if(e.key==="Escape"&&!ov.dataset.lock)shut();if(e.key.toLowerCase()==="m"&&ov.hidden&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName))gate()});
 
 /* ===== QUẢN TRỊ (nhấn phím M) ===== */
 const SHELL='<div class="ui"><p class="hint" id="hint"></p><button class="btn" id="open" hidden>Mở thư</button><button class="btn" id="read" hidden>Đọc lá thư</button></div><div id="ov" hidden></div>';
@@ -158,6 +158,14 @@ const h=(t,a,...k)=>{const e=Object.assign(document.createElement(t),a||{});e.ap
 const lab=(t,e)=>h("label",{className:"lab"},h("span",{textContent:t}),e);
 function readImg(f){return new Promise(r=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(im.width,im.height),c=h("canvas",{width:720,height:720});c.getContext("2d").drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,720,720);r(c.toDataURL("image/jpeg",.82))};im.src=fr.result};fr.readAsDataURL(f)})}
 function pickImgs(multi,cb){const f=h("input",{type:"file",accept:"image/*",multiple:multi});f.onchange=async()=>{for(const x of [...f.files])cb(await readImg(x))};f.click()}
+const HASH="0d0c9bc37ae955b26c8bfecc22fcd072c4ea5ce95947a5051b5ed7399bff4f2e";
+async function sha(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+function gate(){
+  const pw=h("input",{type:"password",inputMode:"numeric",autocomplete:"off"}),msg=h("p",{className:"hint"});
+  const go=async()=>{if(await sha(pw.value)===HASH)admin();else{msg.textContent="Sai mật khẩu.";pw.value="";pw.focus()}};
+  pw.onkeydown=e=>{if(e.key==="Enter")go()};
+  show(h("div",{className:"paper adm"},h("h2",{textContent:"Quản trị"}),lab("Mật khẩu",pw),msg,h("div",{className:"row"},h("button",{className:"sm close",textContent:"Đóng"}),h("button",{className:"btn",textContent:"Mở",onclick:go}))),true);
+  pw.focus()}
 function admin(){
   const P=CONFIG.photos.map(p=>({src:p.src,caption:p.caption})),msg=h("p",{className:"hint"}),list=h("div"),
     l1=h("input",{value:CONFIG.headline[0]}),l2=h("input",{value:CONFIG.headline[1]}),
